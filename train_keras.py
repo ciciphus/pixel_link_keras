@@ -147,6 +147,7 @@ def train_model():
         [b_image, b_pixel_cls_label, b_pixel_cls_weight,
          b_pixel_link_label, b_pixel_link_weight],
         capacity=50)
+
     b_image, b_pixel_cls_label, b_pixel_cls_weight, b_pixel_link_label, b_pixel_link_weight = \
         batch_queue.dequeue()
     pl_net = PixelLink()
@@ -154,21 +155,19 @@ def train_model():
     #                   pixel_cls_weights=b_pixel_cls_weight,
     #                   pixel_link_labels=b_pixel_link_label,
     #                   pixel_link_weights=b_pixel_link_weight)
-    shape = tf.shape(b_pixel_cls_label)
+
     b_pixel_cls_label = tf.cast(b_pixel_cls_label, tf.float32)
     stack = tf.stack([b_pixel_cls_label, b_pixel_cls_weight], axis=3)
-    # b_pixel_cls_label = tf.cast(tf.reshape(b_pixel_cls_label, [shape[0], shape[1], shape[2], 1]), tf.float32)
-    # b_pixel_cls_weight = tf.reshape(b_pixel_cls_weight, [shape[0], shape[1], shape[2], 1])
 
     b_pixel_link_label = tf.cast(b_pixel_link_label, tf.float32)
-    y_true = keras.layers.merge.concatenate \
-        ([stack, b_pixel_link_label, b_pixel_link_weight], axis=-1)
+    y_true = keras.layers.merge.concatenate([stack, b_pixel_link_label, b_pixel_link_weight], axis=-1)
     # y_true = tf.concat\
     #     ([b_pixel_cls_label, b_pixel_cls_weight, b_pixel_link_label, b_pixel_link_weight], axis=-1)
 
     pl_net.model.compile(loss=get_loss, optimizer='adam', metrics=['accuracy'])
     print('start training')
-    pl_net.model.train_on_batch(b_image, y_true)
+    # pl_net.model.train_on_batch(b_image, y_true)
+    pl_net.model.fit(b_image, y_true, epochs=10, steps_per_epoch=1000)
 
 
 train_model()

@@ -73,7 +73,7 @@ def get_dataset(dataset_name, split_name, dataset_dir, reader=None):
     """
     if dataset_name not in datasets_map:
         raise ValueError('Name of dataset unknown %s' % dataset_name)
-    dataset_config = datasets_map[dataset_name];
+    dataset_config = datasets_map[dataset_name]
     file_pattern = dataset_config.file_pattern
     num_samples = dataset_config.split_sizes[split_name]
     return dataset_utils.get_split(split_name, dataset_dir,file_pattern, num_samples, reader)

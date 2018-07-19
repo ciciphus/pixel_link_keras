@@ -16,8 +16,9 @@
 
 import tensorflow as tf
 import numpy as np
+import sys
 slim = tf.contrib.slim
-
+sys.path.append('/Users/ci.chen/src/pixel_link_mobile/pylib/src')
 import util
 
 
@@ -109,7 +110,7 @@ def convert_to_example(image_data, filename, labels, labels_text, bboxes, orient
     image_format = b'JPEG'
     oriented_bboxes = np.asarray(oriented_bboxes)
     if len(bboxes) == 0:
-        print filename, 'has no bboxes'
+        print (filename, 'has no bboxes')
      
     bboxes = np.asarray(bboxes)
     def get_list(obj, idx):
@@ -136,6 +137,7 @@ def convert_to_example(image_data, filename, labels, labels_text, bboxes, orient
             'image/filename': bytes_feature(filename),
             'image/encoded': bytes_feature(image_data)}))
     return example
+
 
 def get_split(split_name, dataset_dir, file_pattern, num_samples, reader=None):
     dataset_dir = util.io.get_absolute_path(dataset_dir)

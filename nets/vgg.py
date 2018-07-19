@@ -54,5 +54,5 @@ def basenet(inputs, fatness = 64, dilation = True):
         net = slim.conv2d(net, fatness * 16, [1, 1], scope='fc7')
         end_points['fc7'] = net
 
-    return net, end_points;    
+    return net, end_points
 

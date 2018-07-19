@@ -269,7 +269,7 @@ def tf_rotate_image(image, xs, ys):
 
 
 def rotate_image(image, xs, ys):
-    rotation_angle = np.random.randint(low = -90, high = 90);
+    rotation_angle = np.random.randint(low = -90, high = 90)
     scale = np.random.uniform(low = MIN_ROTATION_SCLAE, high = MAX_ROTATION_SCLAE)
 #     scale = 1.0
     h, w = image.shape[0:2]
