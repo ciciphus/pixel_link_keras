@@ -27,7 +27,7 @@ def visualize(image_root, det_root, output_root, gt_root = None):
     
     image_names = util.io.ls(image_root, '.jpg')
     for image_idx, image_name in enumerate(image_names):
-        print '%d / %d: %s'%(image_idx + 1, len(image_names), image_name)
+        print ('%d / %d: %s'%(image_idx + 1, len(image_names), image_name))
         image_data = read_image_file(image_name) # in BGR
         image_name = image_name.split('.')[0]
         det_image = image_data.copy()
@@ -36,13 +36,14 @@ def visualize(image_root, det_root, output_root, gt_root = None):
             draw_bbox(det_image, line, color = util.img.COLOR_GREEN)
         output_path = util.io.join_path(output_root, '%s_pred.jpg'%(image_name))
         util.img.imwrite(output_path, det_image)
-        print "Detection result has been written to ", util.io.get_absolute_path(output_path)
+        print ("Detection result has been written to ", util.io.get_absolute_path(output_path))
         
         if gt_root is not None:
             gt_lines = read_gt_file(image_name)
             for line in gt_lines:
                 draw_bbox(image_data, line, color = util.img.COLOR_GREEN)
             util.img.imwrite(util.io.join_path(output_root, '%s_gt.jpg'%(image_name)), image_data)
+
 
 if __name__ == '__main__':
     import argparse
