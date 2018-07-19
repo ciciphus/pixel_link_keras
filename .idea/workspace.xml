@@ -5,17 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="c422ee48-41a2-436f-af2f-2d60e268d95d" name="Default" comment="">
-      <change beforePath="$PROJECT_DIR$/datasets/dataset_factory.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/dataset_factory.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/dataset_utils.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/dataset_utils.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/datasets/icdar2015_to_tfrecords.py" beforeDir="false" afterPath="$PROJECT_DIR$/datasets/icdar2015_to_tfrecords.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nets/mobile_net.py" beforeDir="false" afterPath="$PROJECT_DIR$/nets/mobile_net.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nets/pixel_link_symbol.py" beforeDir="false" afterPath="$PROJECT_DIR$/nets/pixel_link_symbol.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/nets/vgg.py" beforeDir="false" afterPath="$PROJECT_DIR$/nets/vgg.py" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pixel_link_decode.pyx" beforeDir="false" afterPath="$PROJECT_DIR$/pixel_link_decode.pyx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/preprocessing/ssd_vgg_preprocessing.py" beforeDir="false" afterPath="$PROJECT_DIR$/preprocessing/ssd_vgg_preprocessing.py" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/pylib" beforeDir="false" afterPath="$PROJECT_DIR$/pylib" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/scripts/test_any.sh" beforeDir="false" afterPath="$PROJECT_DIR$/scripts/test_any.sh" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/train_keras.py" beforeDir="false" afterPath="$PROJECT_DIR$/train_keras.py" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="TRACKING_ENABLED" value="true" />
@@ -171,8 +162,8 @@
           <file leaf-file-name="train_keras.py" pinned="false" current-in-tab="true">
             <entry file="file://$PROJECT_DIR$/train_keras.py">
               <provider selected="true" editor-type-id="text-editor">
-                <state relative-caret-position="480">
-                  <caret line="142" column="4" lean-forward="true" selection-start-line="142" selection-start-column="4" selection-end-line="142" selection-end-column="4" />
+                <state relative-caret-position="511">
+                  <caret line="168" column="4" lean-forward="true" selection-start-line="168" selection-start-column="4" selection-end-line="168" selection-end-column="4" />
                   <folding>
                     <element signature="e#0#12#0" expanded="true" />
                   </folding>
@@ -323,6 +314,24 @@
             <path>
               <item name="pixel_link_mobile" type="b2602c69:ProjectViewProjectNode" />
               <item name="pixel_link_mobile" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="pixel_link_mobile" type="b2602c69:ProjectViewProjectNode" />
+              <item name="pixel_link_mobile" type="462c0819:PsiDirectoryNode" />
+              <item name="conv2_2" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="pixel_link_mobile" type="b2602c69:ProjectViewProjectNode" />
+              <item name="pixel_link_mobile" type="462c0819:PsiDirectoryNode" />
+              <item name="conv2_2" type="462c0819:PsiDirectoryNode" />
+              <item name="test" type="462c0819:PsiDirectoryNode" />
+            </path>
+            <path>
+              <item name="pixel_link_mobile" type="b2602c69:ProjectViewProjectNode" />
+              <item name="pixel_link_mobile" type="462c0819:PsiDirectoryNode" />
+              <item name="conv2_2" type="462c0819:PsiDirectoryNode" />
+              <item name="test" type="462c0819:PsiDirectoryNode" />
+              <item name="variables" type="462c0819:PsiDirectoryNode" />
             </path>
             <path>
               <item name="pixel_link_mobile" type="b2602c69:ProjectViewProjectNode" />
@@ -520,16 +529,15 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="1440" y="0" width="1920" height="1080" extended-state="0" />
-    <editor active="true" />
     <layout>
       <window_info anchor="bottom" id="TODO" order="6" />
       <window_info anchor="bottom" id="Event Log" order="12" side_tool="true" />
       <window_info anchor="bottom" id="Database Changes" order="9" show_stripe_button="false" />
       <window_info anchor="bottom" id="Version Control" order="8" />
       <window_info anchor="bottom" id="Python Console" order="10" />
-      <window_info active="true" anchor="bottom" id="Run" order="2" visible="true" weight="0.32976654" />
+      <window_info anchor="bottom" id="Run" order="2" visible="true" weight="0.32976654" />
       <window_info anchor="bottom" id="Terminal" order="11" />
-      <window_info content_ui="combo" id="Project" order="0" visible="true" weight="0.12864584" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.12864584" />
       <window_info anchor="bottom" id="Docker" order="7" show_stripe_button="false" />
       <window_info anchor="right" id="Database" order="4" />
       <window_info anchor="bottom" id="Find" order="1" weight="0.32976654" />
@@ -919,22 +927,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/train_keras.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="480">
-          <caret line="142" column="4" lean-forward="true" selection-start-line="142" selection-start-column="4" selection-end-line="142" selection-end-column="4" />
-          <folding>
-            <element signature="e#0#12#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/train_pixel_link.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="373">
           <caret line="148" column="51" lean-forward="true" selection-start-line="148" selection-start-column="51" selection-end-line="148" selection-end-column="51" />
           <folding>
             <element signature="e#82#100#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/train_keras.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="511">
+          <caret line="168" column="4" lean-forward="true" selection-start-line="168" selection-start-column="4" selection-end-line="168" selection-end-column="4" />
+          <folding>
+            <element signature="e#0#12#0" expanded="true" />
           </folding>
         </state>
       </provider>
