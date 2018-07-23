@@ -7,8 +7,8 @@ import pixel_link
 from preprocessing import ssd_vgg_preprocessing
 import tensorflow as tf
 import sys
-
-
+import numpy as np
+from scipy import misc
 sys.path.append('/Users/ci.chen/src/pixel_link_mobile/pylib/src')
 import util
 import tensorflow.contrib.slim as slim
@@ -45,45 +45,12 @@ def config_initialization():
     util.proc.set_proc_name('train_pixel_link_on' + '_' + config.dataset_name)
 
 
-def get_data():
-    data_path = config.dataset_path + config.train_name
-
-    keys_to_features = {
-        'image/encoded': tf.FixedLenFeature((), tf.string, default_value=''),
-        'image/format': tf.FixedLenFeature((), tf.string, default_value='jpeg'),
-        'image/filename': tf.FixedLenFeature((), tf.string, default_value=''),
-        'image/shape': tf.FixedLenFeature([3], tf.int64),
-        'image/object/bbox/xmin': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/ymin': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/xmax': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/ymax': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/x1': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/x2': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/x3': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/x4': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/y1': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/y2': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/y3': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/y4': tf.VarLenFeature(dtype=tf.float32),
-        'image/object/bbox/label': tf.VarLenFeature(dtype=tf.int64),
-    }
-    # Create a list of filenames and pass it to a queue
-    filename_queue = tf.train.string_input_producer([data_path], num_epochs=1)
-    # Define a reader and read the next record
-    reader = tf.TFRecordReader()
-    _, serialized_data = reader.read(filename_queue)
-
-    features = tf.parse_single_example(serialized_data, features=keys_to_features)
-
-    return []
-
-
 def get_data_slim():
     import datasets.dataset_factory as dataset_factory
 
     config_initialization()
     dataset = dataset_factory.get_dataset(dataset_name=config.dataset_name, split_name='train',
-                                          dataset_dir='/Users/ci.chen/Downloads/ic15/pixel_link/Challenge4/')
+                                          dataset_dir=config.dataset_path)
     with tf.name_scope(config.dataset_name + '_data_provider'):
         provider = slim.dataset_data_provider.DatasetDataProvider(
             dataset,
@@ -109,22 +76,92 @@ def get_data_slim():
     return [image, glabel, gbboxes, x1, x2, x3, x4, y1, y2, y3, y4]
 
 
+def generate_random_data():
+    import numpy as np
+    height = config.train_image_height
+    width = config.train_image_width
+    size = 2
+    y_true = np.random.random_sample([size, height // config.strides[0], width // config.strides[0], 18])
+    # y_true = np.random.random_sample([size, height // config.strides[0], width // config.strides[0], 1])
+    b_image = np.random.random_sample([size, height, width, 3])
+    return b_image, y_true
+
+
+# generate batch data
+def data_generator(imgs, labels, batch_size):
+
+
+    while True:
+        index = np.random.choice(len(imgs), batch_size)
+        batch_labels = labels[index]
+        batch_imgs = imgs[index, :, :, :]
+
+        yield batch_imgs, batch_labels
+
+
+def get_data():
+    from pathlib import Path
+    import json
+    import os
+    data_dir = config.train_dir
+    data_path = Path(data_dir)
+    labels_path = os.path.join(config.train_labels_path, config.train_labels_name)
+
+    with open(labels_path) as f:
+        labels = json.load(f)
+
+    label_list = []
+    img_list = []
+    for image_name in sorted(data_path.glob("*.jpg")):
+        img = misc.imread(str(image_name))
+        img = misc.imresize(img, [config.train_image_height, config.train_image_width, 3])
+        img_name = str(image_name).split('/')[-1]
+        label = labels[img_name]
+        gxs = label['gxs']
+        gys = label['gys']
+        glabel = label['glabel']
+        pixel_cls_label, pixel_cls_weight, pixel_link_label, pixel_link_weight = \
+            pixel_link.cal_gt_for_single_image(gxs, gys, glabel)
+
+        pixel_cls_label.astype(np.float32)
+        stack = np.stack([pixel_cls_label, pixel_cls_weight], axis=2)
+
+        pixel_link_label.astype(np.float32)
+        y_true = np.concatenate([stack, pixel_link_label, pixel_link_weight], axis=-1)
+
+        label_list.append(y_true)
+        img_list.append(img)
+
+    img_list = np.array(img_list)
+    label_list = np.array(label_list)
+    print(img_list.shape, label_list.shape)
+    return img_list, label_list
+
+
+
+# def get_data():
+#     [image, glabel, gbboxes, x1, x2, x3, x4, y1, y2, y3, y4] = get_data_slim()  # this get a single image
+#     gxs = K.transpose(K.stack([x1, x2, x3, x4]))  # shape = (N, 4) N is number of bboxes
+#     gys = K.transpose(K.stack([y1, y2, y3, y4]))
+#
+#     image, glabel, gbboxes, gxs, gys = \
+#         ssd_vgg_preprocessing.preprocess_image(
+#             image, glabel, gbboxes, gxs, gys,
+#             out_shape=config.train_image_shape,
+#             data_format=config.data_format,
+#             use_rotation=config.use_rotation,
+#             is_training=True)
+#     return [image, glabel, gbboxes, gxs, gys]
+
+
+
 def train_model():
-    [image, glabel, gbboxes, x1, x2, x3, x4, y1, y2, y3, y4] = get_data_slim()
-    gxs = K.transpose(K.stack([x1, x2, x3, x4]))  # shape = (N, 4)
-    gys = K.transpose(K.stack([y1, y2, y3, y4]))
 
-    image, glabel, gbboxes, gxs, gys = \
-        ssd_vgg_preprocessing.preprocess_image(
-            image, glabel, gbboxes, gxs, gys,
-            out_shape=config.train_image_shape,
-            data_format=config.data_format,
-            use_rotation=config.use_rotation,
-            is_training=True)
-
-    pixel_cls_label, pixel_cls_weight, \
-    pixel_link_label, pixel_link_weight = \
-        pixel_link.tf_cal_gt_for_single_image(gxs, gys, glabel)
+    # [image, glabel, gbboxes, gxs, gys] = get_data()
+    #
+    # pixel_cls_label, pixel_cls_weight, \
+    # pixel_link_label, pixel_link_weight = \
+    #     pixel_link.tf_cal_gt_for_single_image(gxs, gys, glabel)
 
     # b_image, b_pixel_cls_label, b_pixel_cls_weight, b_pixel_link_label, b_pixel_link_weight = \
     #     K.tf.train.shuffle_batch([image, pixel_cls_label, pixel_cls_weight,
@@ -134,40 +171,31 @@ def train_model():
     #                              min_after_dequeue=100,
     #                              num_threads=32)
 
-    b_image, b_pixel_cls_label, b_pixel_cls_weight, \
-    b_pixel_link_label, b_pixel_link_weight = \
-        tf.train.batch(
-            [image, pixel_cls_label, pixel_cls_weight,
-             pixel_link_label, pixel_link_weight],
-            batch_size=int(config.batch_size_per_gpu),
-            num_threads=int(config.num_preprocessing_threads),
-            capacity=500)
+    image_set, true_set = get_data()
+    # print(type(image_set[0]), type(true_set[0]))
 
-    batch_queue = slim.prefetch_queue.prefetch_queue(
-        [b_image, b_pixel_cls_label, b_pixel_cls_weight,
-         b_pixel_link_label, b_pixel_link_weight],
-        capacity=50)
 
-    b_image, b_pixel_cls_label, b_pixel_cls_weight, b_pixel_link_label, b_pixel_link_weight = \
-        batch_queue.dequeue()
+    # batch_queue = slim.prefetch_queue.prefetch_queue(
+    #     [b_image, b_pixel_cls_label, b_pixel_cls_weight,
+    #      b_pixel_link_label, b_pixel_link_weight],
+    #     capacity=50)
+    #
+    # b_image, b_pixel_cls_label, b_pixel_cls_weight, b_pixel_link_label, b_pixel_link_weight = \
+    #     batch_queue.dequeue()
     pl_net = PixelLink()
-    # pl_net.build_loss(pixel_cls_labels=b_pixel_cls_label,
-    #                   pixel_cls_weights=b_pixel_cls_weight,
-    #                   pixel_link_labels=b_pixel_link_label,
-    #                   pixel_link_weights=b_pixel_link_weight)
 
-    b_pixel_cls_label = tf.cast(b_pixel_cls_label, tf.float32)
-    stack = tf.stack([b_pixel_cls_label, b_pixel_cls_weight], axis=3)
+    # compile our own loss function
+    pl_net.model.compile(loss=get_loss, optimizer='sgd', metrics=['accuracy'])
+    pl_net.model.summary()
 
-    b_pixel_link_label = tf.cast(b_pixel_link_label, tf.float32)
-    y_true = keras.layers.merge.concatenate([stack, b_pixel_link_label, b_pixel_link_weight], axis=-1)
-    # y_true = tf.concat\
-    #     ([b_pixel_cls_label, b_pixel_cls_weight, b_pixel_link_label, b_pixel_link_weight], axis=-1)
-
-    pl_net.model.compile(loss=get_loss, optimizer='adam', metrics=['accuracy'])
+    # pl_net.model.compile(loss=losses.sparse_categorical_crossentropy, optimizer='sgd', metrics=['accuracy'])
+    # b_image, y_true = generate_random_data()
     print('start training')
     # pl_net.model.train_on_batch(b_image, y_true)
-    pl_net.model.fit(b_image, y_true, epochs=10, steps_per_epoch=1000)
+
+    train_generator = data_generator(image_set, true_set, config.batch_size)
+    pl_net.model.fit_generator(train_generator, epochs=50, steps_per_epoch=60)
+    pl_net.model.save()
 
 
 train_model()

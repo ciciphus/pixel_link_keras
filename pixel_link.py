@@ -107,8 +107,8 @@ def cal_gt_for_single_image(normed_xs, normed_ys, labels):
 
     num_positive_bboxes = np.sum(np.asarray(labels) == text_label)
     # rescale normalized xys to absolute values
-    xs = normed_xs * w
-    ys = normed_ys * h
+    xs = np.array(normed_xs) * w
+    ys = np.array(normed_ys) * h
 
     # initialize ground truth values
     mask = np.zeros(score_map_shape, dtype=np.int32)
@@ -122,7 +122,7 @@ def cal_gt_for_single_image(normed_xs, normed_ys, labels):
     # and pixels in ignored bboxes are ignored as well
     # That is to say, only the weights of not ignored pixels are set to 1
 
-    ## get the masks of all bboxes
+    # get the masks of all bboxes
     bbox_masks = []
     pos_mask = mask.copy()
     for bbox_idx, (bbox_xs, bbox_ys) in enumerate(zip(xs, ys)):
@@ -146,11 +146,11 @@ def cal_gt_for_single_image(normed_xs, normed_ys, labels):
     pos_mask = np.asarray(pos_mask == 1, dtype=np.int32)
     num_positive_pixels = np.sum(pos_mask)
 
-    ## add all bbox_maskes, find non-overlapping pixels
+    # add all bbox_maskes, find non-overlapping pixels
     sum_mask = np.sum(bbox_masks, axis=0)
     not_overlapped_mask = sum_mask == 1
 
-    ## gt and weight calculation
+    # gt and weight calculation
     for bbox_idx, bbox_mask in enumerate(bbox_masks):
         bbox_label = labels[bbox_idx]
         if bbox_label == ignore_label:
@@ -270,7 +270,7 @@ def decode_image(pixel_scores, link_scores,
     import config
     if config.decode_method == DECODE_METHOD_join:
         mask = (pixel_scores, link_scores,
-                                    pixel_conf_threshold, link_conf_threshold)
+                pixel_conf_threshold, link_conf_threshold)
         return mask
     elif config.decode_method == DECODE_METHOD_border_split:
         return decode_image_by_border(pixel_scores, link_scores,
@@ -283,7 +283,6 @@ import pyximport
 
 pyximport.install()
 from pixel_link_decode import decode_image_by_join
-
 
 
 def min_area_rect(cnt):

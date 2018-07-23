@@ -50,6 +50,8 @@ min_height = 10
 # ====================Training and model params START =================
 dropout_ratio = 0
 max_neg_pos_ratio = 3
+
+
 global dataset_path
 global dataset_name
 global train_image_height
@@ -58,9 +60,9 @@ global num_readers
 global num_gpus
 global train_dir
 global test_name
-global train_name
+global train_labels_name
 global num_preprocessing_threads
-
+global train_labels_path
 
 def default_config():
     global batch_size
@@ -73,23 +75,28 @@ def default_config():
     global num_gpus
     global train_dir
     global test_name
-    global train_name
+    global train_labels_name
     global num_preprocessing_threads
+    global train_labels_path
+    global save_model_path
 
+    save_model_path = '/Users/ci.chen/temp/model'
+    train_labels_path = '/Users/ci.chen/Downloads/ic15/pixel_link/Challenge4/'
     dataset_path = '/Users/ci.chen/Downloads/ic15/pixel_link/Challenge4/'
-    train_dir = '/Users/ci.chen/Downloads/ic15/pixel_link/Challenge4/ch4_training_images'
-    test_name = 'icdar2015_test.tfrecord'
-    train_name = 'icdar2015_train.tfrecord'
+    train_dir = '/Users/ci.chen/Downloads/ic15/Challenge4/ch4_training_images'
+    test_name = 'icdar2015_test.json'
+    train_labels_name = 'icdar2015_train.json'
     dataset_name = 'icdar2015'
     train_image_height = 384
     train_image_width = 640
     num_readers = 1
     num_gpus = 1
-    batch_size = int(32)
+    batch_size = int(16)
     weight_decay = 0.0001
     num_preprocessing_threads = 24
 
 
+default_config()
 feat_fuse_type = pixel_link_symbol.FUSE_TYPE_cascade_conv1x1_upsample_sum
 # feat_fuse_type = pixel_link_symbol.FUSE_TYPE_cascade_conv1x1_128_upsamle_sum_conv1x1_2
 # feat_fuse_type = pixel_link_symbol.FUSE_TYPE_cascade_conv1x1_128_upsamle_concat_conv1x1_2
@@ -159,7 +166,7 @@ def _set_image_shape(shape):
     assert h % 4 == 0
 
     train_image_shape = [h, w]
-    score_map_shape = (h / strides[0], w / strides[0])
+    score_map_shape = (h // strides[0], w // strides[0])
     print("set img shape: ", score_map_shape)
     image_shape = train_image_shape
 
@@ -182,7 +189,7 @@ def _set_train_with_ignored(train_with_ignored_):
     train_with_ignored = train_with_ignored_
 
 
-def init_config(image_shape, batch_size=32,
+def init_config(image_shape, batch_size=2,
                 weight_decay=0.0005,
                 num_gpus=1,
                 pixel_conf_threshold=0.6,
@@ -201,13 +208,13 @@ def init_config(image_shape, batch_size=32,
     global clone_scopes
     clone_scopes = ['clone_%d' % (idx) for idx in range(num_clones)]
 
-    _set_batch_size(batch_size)
-
-    global batch_size_per_gpu
-    batch_size_per_gpu = batch_size // num_clones
-    if batch_size_per_gpu < 1:
-        raise ValueError('Invalid batch_size [=%d], \
-                resulting in 0 images per gpu.' % (batch_size))
+    # _set_batch_size(batch_size)
+    #
+    # global batch_size_per_gpu
+    # batch_size_per_gpu = batch_size // num_clones
+    # if batch_size_per_gpu < 1:
+    #     raise ValueError('Invalid batch_size [=%d], \
+    #             resulting in 0 images per gpu.' % (batch_size))
 
     global num_neighbours
     num_neighbours = pixel_link.get_neighbours_fn()[1]
@@ -274,3 +281,4 @@ def load_config(path):
         util.io.copy('config.py', path)
 
 
+init_config([train_image_height, train_image_width])

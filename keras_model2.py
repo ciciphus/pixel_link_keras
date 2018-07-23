@@ -12,19 +12,18 @@ import config
 class PixelLink:
     def __init__(self):
         config.default_config()
+
         self.height = config.train_image_height
         self.width = config.train_image_width
 
         self.input_shape = (self.height, self.width, 3)
         # self.input = Input(tensor=image)
         self.input = Input(shape=self.input_shape)
-        self.net = self.input
         self.width_multiplier = 1
         # trainign will change
         self.is_training = True
         pixel_cls_logits, pixel_link_logits = self.create_model()
-        self.pixel_link_logits = pixel_link_logits
-        self.pixel_cls_logits = pixel_cls_logits
+
         output = [pixel_cls_logits, pixel_link_logits]
         # self.model = keras.models.Model(inputs=self.input, outputs=[pixel_cls_logits, pixel_link_logits])
         merged = concatenate([pixel_cls_logits, pixel_link_logits], axis=-1)
@@ -33,7 +32,7 @@ class PixelLink:
     # create pixel link model
     def create_model(self):
         self.net = Conv2D(filters=round(self.width_multiplier * 32), kernel_size=[3, 3],
-                          input_shape=self.input_shape, padding="same")(self.net)
+                          input_shape=self.input_shape, padding="same")(self.input)
         self.net = self._add_df_layer(self.net, 64)
         self.net = self._add_df_layer(self.net, 128, downsample=True)
         self.net = self._add_df_layer(self.net, 128)
@@ -75,26 +74,12 @@ class PixelLink:
         pixel_net = self._up_sample(pixel_net, shortcut_link2)
         pixel_net = self._up_sample(pixel_net, shortcut_link1)
 
-        # last three layers of mobilenet, we may neglect this stuff
+        # last three layers of mobilenet, we may neglect this stuff or change it to other layers
         # self.net.add(AveragePooling2D(pool_size=[7, 7]))
         # self.net.add(Dense(num_class))
         # self.net.add(Softmax())
 
         return text_net, pixel_net
-
-    # def _score_layer(self, net, num_classes):
-    #     net = Conv2D(filters=num_classes, kernel_size=[1, 1], strides=1)(net)
-    #     use_dropout = config.dropout_ratio > 0
-    #
-    #     if use_dropout:
-    #         if self.is_training:
-    #             dropout_ratio = config.dropout_ratio
-    #         else:
-    #             dropout_ratio = 0
-    #     keep_prob = 1.0 - dropout_ratio
-    #     tf.logging.info('Using Dropout, with keep_prob = %f' % (keep_prob))
-    #     net = Dropout(keep_prob=keep_prob)(net)
-    #     return net
 
     # upsample the map and add it together
     def _up_sample(self, net, shortcut):
@@ -156,17 +141,16 @@ def _logits_to_scores(pixel_cls_logits, pixel_link_logits):
         _flat_pixel_cls_values(pixel_cls_scores)
 
     #         shape = self.pixel_link_logits.shape.as_list()
-    shape = tf.shape(pixel_link_logits)
+
     # print(tf.shape(self.pixel_link_logits))
     # reshape logits to get the 8*2 channel
-    height = config.train_image_height // config.strides[0]
-    width = config.train_image_width // config.strides[0]
+    # height = config.train_image_height // config.strides[0]
+    # width = config.train_image_width // config.strides[0]
+    # keras can't reshape unknown
     # pixel_link_logits = keras.layers.Reshape((width, height, config.num_neighbours, 2)) \
     #     (pixel_link_logits)
-    pixel_link_logits = tf.reshape(pixel_link_logits,
-                                   [shape[0], shape[1], shape[2], config.num_neighbours, 2])
 
-    pixel_link_scores = Softmax()(pixel_link_logits)
+    # pixel_link_scores = Softmax()(pixel_link_logits)
 
     # pixel_pos_scores = pixel_cls_scores[:, :, :, 1]
     # link_pos_scores = pixel_link_scores[:, :, :, :, 1]
@@ -176,15 +160,23 @@ def _logits_to_scores(pixel_cls_logits, pixel_link_logits):
 
 # custom loss function
 def get_loss(y_true, y_pred):
-    pixel_cls_labels = tf.cast(y_true[:, :, :], tf.int32)
-    pixel_cls_weights = y_true[1]
-    pixel_link_labels = tf.cast(y_true[2], tf.int32)
-    pixel_link_weights = y_true[3]
+    pixel_cls_labels = tf.cast(y_true[:, :, :, 0], tf.int32)
+    pixel_cls_labels = tf.squeeze(pixel_cls_labels)
+    pixel_cls_weights = y_true[:, :, :, 1]
+    pixel_cls_weights = tf.squeeze(pixel_cls_weights)
+
+    pixel_link_labels = tf.cast(y_true[:, :, :, 2:10], tf.int32)
+    pixel_link_weights = y_true[:, :, :, 10:18]
     # pixel_cls_labels, pixel_cls_weights, pixel_link_labels, pixel_link_weights = y_true
     pixel_cls_logits = y_pred[:, :, :, 0:2]
     pixel_link_logits = y_pred[:, :, :, 2:18]
-    pixel_cls_logits_flatten, pixel_cls_scores_flatten = _logits_to_scores(pixel_cls_logits, pixel_link_logits)
 
+    # reshape logits
+    shape = tf.shape(pixel_link_logits)
+    pixel_link_logits = tf.reshape(pixel_link_logits,
+                                   [shape[0], shape[1], shape[2], config.num_neighbours, 2])
+
+    pixel_cls_logits_flatten, pixel_cls_scores_flatten = _logits_to_scores(pixel_cls_logits, pixel_link_logits)
 
     loss = build_loss(pixel_cls_labels, pixel_cls_weights, pixel_link_labels, pixel_link_weights,
                       pixel_cls_logits_flatten, pixel_cls_scores_flatten, pixel_link_logits)
@@ -196,7 +188,7 @@ def build_loss(pixel_cls_labels, pixel_cls_weights, pixel_link_labels, pixel_lin
     pixel_link_neg_loss_weight_lambda = config.pixel_link_neg_loss_weight_lambda
     pixel_cls_loss_weight_lambda = config.pixel_cls_loss_weight_lambda
     pixel_link_loss_weight = config.pixel_link_loss_weight
-    batch_size = config.batch_size_per_gpu
+    batch_size = config.batch_size
     background_label = config.background_label
     text_label = config.text_label
 
@@ -221,19 +213,11 @@ def build_loss(pixel_cls_labels, pixel_cls_weights, pixel_link_labels, pixel_lin
 
         # n_neg = 10000 or n_pos * max_neg_pos_ratio
         # it construct a limitation of neg/pos
-
         n_neg = tf.cond(n_pos > 0, has_pos, no_pos)
 
-        # max_neg entries would be no more than neg_mask num
+        # entries should be no more than neg_mask num
         max_neg_entries = tf.reduce_sum(K.cast(neg_mask, dtype='int32'))
-
-        n_neg = K.minimum(n_neg, max_neg_entries)
-        n_neg = K.cast(n_neg, 'int32')
-
         n_neg = tf.cond(n_pos > 0, has_pos, no_pos)
-
-        # max_neg entries would be no more than neg_mask num
-        max_neg_entries = tf.reduce_sum(tf.cast(neg_mask, dtype='int32'))
 
         n_neg = tf.minimum(n_neg, max_neg_entries)
         n_neg = tf.cast(n_neg, dtype='int32')
@@ -258,12 +242,15 @@ def build_loss(pixel_cls_labels, pixel_cls_weights, pixel_link_labels, pixel_lin
 
         # batch version, call OHNM_image
 
+    # neg_conf is pixel_cls_scores_flatten
+    # pos and neg mask is a mask, whose pixel is true if it is pos/neg
     def OHNM_batch(neg_conf, pos_mask, neg_mask):
         selected_neg_mask = []
         for image_idx in range(batch_size):
             image_neg_conf = neg_conf[image_idx, :]
             image_neg_mask = neg_mask[image_idx, :]
             image_pos_mask = pos_mask[image_idx, :]
+            # print(tf.shape(image_pos_mask))
             n_pos = tf.reduce_sum(tf.cast(image_pos_mask, dtype='int32'))
             selected_neg_mask.append(OHNM_single_image(image_neg_conf, n_pos, image_neg_mask))
 
@@ -271,6 +258,7 @@ def build_loss(pixel_cls_labels, pixel_cls_weights, pixel_link_labels, pixel_lin
         return selected_neg_mask
 
     batch_size = int(batch_size)
+
     pos_pixel_weights_flatten = tf.reshape(pixel_cls_weights, [batch_size, -1])
     pixel_cls_labels_flatten = tf.reshape(pixel_cls_labels, [batch_size, -1])
     pos_mask = tf.equal(pixel_cls_labels_flatten, text_label)
@@ -295,8 +283,7 @@ def build_loss(pixel_cls_labels, pixel_cls_weights, pixel_link_labels, pixel_lin
             pixel_neg_scores = pixel_cls_scores_flatten[:, :, 0]
             selected_neg_pixel_mask = OHNM_batch(pixel_neg_scores, pos_mask, neg_mask)
 
-            pixel_cls_weights = pos_pixel_weights_flatten + \
-                                tf.cast(selected_neg_pixel_mask, tf.float32)
+            pixel_cls_weights = pos_pixel_weights_flatten + tf.cast(selected_neg_pixel_mask, tf.float32)
             n_neg = tf.cast(tf.reduce_sum(selected_neg_pixel_mask), tf.float32)
             loss = tf.reduce_sum(pixel_cls_loss * pixel_cls_weights) / (n_neg + n_pos)
             return loss

@@ -160,9 +160,9 @@ def test():
 
             
     # create zip file for icdar2015
-    cmd = 'cd %s;zip -j %s %s/*'%(dump_path, zip_path, txt_path);
+    cmd = 'cd %s;zip -j %s %s/*'%(dump_path, zip_path, txt_path)
     print cmd
-    util.cmd.cmd(cmd);
+    util.cmd.cmd(cmd)
     print "zip file created: ", util.io.join_path(dump_path, zip_path)
 
          
